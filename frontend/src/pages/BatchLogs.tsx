@@ -40,7 +40,8 @@ const BatchLogs: React.FC = () => {
                                     <td>{log.id}</td>
                                     <td>{log.jobType}</td>
                                     <td>
-                                        <span className={`badge ${log.status === 'SUCCESS' ? 'badge-success' : 'badge-danger'}`}>
+                                        {/* NO_NEW: 새 회차가 아직 없음(정상) → 회색 */}
+                                        <span className={`badge ${log.status === 'SUCCESS' ? 'badge-success' : log.status === 'NO_NEW' ? 'badge-secondary' : 'badge-danger'}`}>
                                             {log.status}
                                         </span>
                                     </td>

@@ -33,6 +33,7 @@ public class LottoSyncService {
     private final BatchLogRepository batchLogRepository;
     private final LottoDrawJdbcRepository lottoDrawJdbcRepository;
     private final LottoRecommendationRepository recommendationRepository;
+    private final LottoRecommendationService lottoRecommendationService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -88,59 +89,83 @@ public class LottoSyncService {
         return draw;
     }
 
+    /**
+     * 저장된 최신 회차 다음부터 API에 있는 회차까지 수집한다. 여러 번 실행해도 이어서 받으므로 중복이 없다.
+     * 결과는 batch_log에 SUCCESS / NO_NEW(새 회차 아직 없음) / FAIL(API 오류)로 남기고,
+     * 오류 없이 새 회차를 저장했을 때만 다음 회차 추천을 자동 생성한다.
+     */
     @Transactional
     public void syncLatestDraws() {
-        // DB에 저장된 가장 최신 회차를 가져옵니다.
         int latestSavedDraw = lottoDrawRepository.findTopByOrderByIdDesc()
                 .map(LottoDraw::getId)
                 .orElse(0);
 
         int nextDraw = latestSavedDraw + 1;
-        boolean hasMore = true;
+        int savedCount = 0;
+        String failReason = null;
         List<LottoDraw> batchList = new ArrayList<>();
 
-        while (hasMore) {
+        while (true) {
             try {
                 DhLottoResponse response = lottoClient.fetchLottoDraw(nextDraw);
-                if (response.isSuccess()) {
-                    DhLottoResponse.DrawInfo info = response.getFirstDraw();
-                    // 응답은 됐지만, 요청한 회차와 다른 회차가 반환되면 미래 회차이므로 중단
-                    if (info.getLtEpsd() != null && info.getLtEpsd() != nextDraw) {
-                        log.info("Requested draw {} but got draw {}. Stopping sync.", nextDraw, info.getLtEpsd());
-                        hasMore = false;
-                    } else {
-                        batchList.add(mapToEntity(info));
-                        log.info("Fetched draw {}", nextDraw);
+                // LottoClient는 HTTP 오류·예외를 빈 응답으로 돌려준다
+                if (!response.isSuccess()) {
+                    failReason = "Draw " + nextDraw + ": API returned no data";
+                    break;
+                }
+                Integer returned = response.getFirstDraw().getLtEpsd();
+                if (returned == null) {
+                    failReason = "Draw " + nextDraw + ": response has no draw number";
+                    break;
+                }
+                // 요청 회차가 아직 없으면 API가 최신 회차를 돌려준다 → 정상 종료
+                if (returned != nextDraw) {
+                    log.info("Requested draw {} but got draw {}. Stopping sync.", nextDraw, returned);
+                    break;
+                }
+                batchList.add(mapToEntity(response.getFirstDraw()));
+                log.info("Fetched draw {}", nextDraw);
+                nextDraw++;
 
-                        // 100건이 모이면 JDBC Batch를 통해 한 번에 INSERT
-                        if (batchList.size() >= 100) {
-                            lottoDrawJdbcRepository.saveAllBatch(batchList);
-                            for (LottoDraw draw : batchList) {
-                                evaluateRecommendations(draw);
-                            }
-                            batchLogRepository.save(BatchLog.of("SYNC_LOTTO_BATCH", "SUCCESS", "Synced batch up to draw: " + nextDraw));
-                            batchList.clear();
-                        }
-                        nextDraw++;
-                    }
-                } else {
-                    hasMore = false; // 응답 실패 시 중단
+                // 100건이 모이면 JDBC Batch로 한 번에 INSERT
+                if (batchList.size() >= 100) {
+                    savedCount += flush(batchList, nextDraw - 1);
                 }
             } catch (Exception e) {
-                hasMore = false;
-                log.error("Stop syncing due to error", e);
+                log.error("Stop syncing due to error at draw {}", nextDraw, e);
+                failReason = "Draw " + nextDraw + " error: " + e.getMessage();
+                break;
             }
         }
+        savedCount += flush(batchList, nextDraw - 1);
 
-        // 100건 단위로 묶고 남은 자투리 데이터 INSERT
-        if (!batchList.isEmpty()) {
-            lottoDrawJdbcRepository.saveAllBatch(batchList);
-            for (LottoDraw draw : batchList) {
-                evaluateRecommendations(draw);
-            }
-            batchLogRepository.save(BatchLog.of("SYNC_LOTTO_BATCH", "SUCCESS", "Synced final batch, ending at draw: " + (nextDraw - 1)));
-            batchList.clear();
+        if (failReason != null) {
+            batchLogRepository.save(BatchLog.of("SYNC_LOTTO_BATCH", "FAIL", failReason));
+            return;
         }
+        if (savedCount == 0) {
+            batchLogRepository.save(BatchLog.of("SYNC_LOTTO_BATCH", "NO_NEW", "No new draw after " + latestSavedDraw));
+            return;
+        }
+        // nextDraw = 마지막 저장 회차 + 1 = 아직 추첨 전인 회차
+        generateNextIfMissing(nextDraw);
+    }
+
+    private int flush(List<LottoDraw> batch, int lastDraw) {
+        if (batch.isEmpty()) return 0;
+        lottoDrawJdbcRepository.saveAllBatch(batch);
+        batch.forEach(this::evaluateRecommendations);
+        batchLogRepository.save(BatchLog.of("SYNC_LOTTO_BATCH", "SUCCESS", "Synced up to draw: " + lastDraw));
+        int count = batch.size();
+        batch.clear();
+        return count;
+    }
+
+    // 다음 회차 추천이 아직 없을 때만 5세트 생성 (재실행해도 중복 생성 안 됨)
+    private void generateNextIfMissing(int nextDraw) {
+        if (recommendationRepository.existsByTargetDraw(nextDraw)) return;
+        lottoRecommendationService.generateRecommendations(5);
+        log.info("Auto-generated recommendations for draw {}", nextDraw);
     }
 
     private void evaluateRecommendations(LottoDraw draw) {
