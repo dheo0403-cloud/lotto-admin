@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://${DB_HOST:mariadb-vm-svc}:${DB_PORT:3306}/${DB_NAME:lotto_db}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  jackson:
+    time-zone: Asia/Seoul
+
+server:
+  port: ${SERVER_PORT:8082}
+  servlet:
+    context-path: /lotto
+
+app:
+  # 쓰기(POST) API 관리자 토큰. 비어 있으면 쓰기 API 전부 차단
+  admin-token: ${LOTTO_ADMIN_TOKEN:}

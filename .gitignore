@@ -1,0 +1,17 @@
+# 빌드 산출물
+backend/build/
+backend/bin/
+backend/.gradle/
+.gradle/
+# bootJar 시 frontend/dist에서 복사되는 산출물
+backend/src/main/resources/static/
+frontend/node_modules/
+frontend/dist/
+
+# 로그·IDE·세션 파일
+*.log
+.idea/
+backend/.idea/
+.DS_Store
+cookies.txt
+.claude/settings.local.json

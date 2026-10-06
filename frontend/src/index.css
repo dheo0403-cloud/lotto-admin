@@ -1,0 +1,137 @@
+/* AdminLTE 호환 CSS - 전체 화면 반응형 */
+body {
+  margin: 0;
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #f4f6f9;
+}
+
+/* AdminLTE body class 적용을 위해 #root의 고정 너비 제거 */
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  border: none;
+  min-height: 100vh;
+  display: block;
+  box-sizing: border-box;
+}
+
+/* 다크 모드 배경 */
+.content-wrapper {
+  background-color: #0f172a !important;
+  min-height: calc(100vh - 57px - 50px);
+}
+
+/* 네비게이션 바 다크 */
+.main-header.navbar {
+  background-color: #1e293b !important;
+  border-bottom: 1px solid #334155 !important;
+}
+.main-header .nav-link {
+  color: #94a3b8 !important;
+}
+.main-header .nav-link:hover {
+  color: #f1f5f9 !important;
+}
+
+/* 사이드바 */
+.main-sidebar {
+  background-color: #1e293b !important;
+}
+.sidebar .nav-link {
+  color: #94a3b8 !important;
+}
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  color: #f1f5f9 !important;
+  background-color: #334155 !important;
+}
+
+/* 카드 스타일 */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 테이블 다크 모드 */
+.table-dark {
+  background-color: #1e293b;
+}
+.table-dark th,
+.table-dark td {
+  border-color: #334155 !important;
+  vertical-align: middle;
+}
+
+/* 로또 공 컴포넌트 */
+.lotto-ball {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.lotto-ball-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  margin: 0 2px;
+}
+.lotto-ball-md {
+  width: 40px;
+  height: 40px;
+  font-size: 17px;
+  margin: 0 3px;
+}
+.lotto-ball-lg {
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  margin: 0 4px;
+}
+
+/* 푸터 다크 */
+.main-footer {
+  background-color: #1e293b !important;
+  border-top: 1px solid #334155 !important;
+  color: #64748b !important;
+}
+
+/* info-box 다크 모드 */
+.info-box {
+  min-height: 80px;
+}
+
+/* 반응형: 모바일에서도 테이블이 가로 스크롤 */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* 버튼 hover 효과 */
+.btn {
+  transition: all 0.2s ease;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* 차트 컨테이너 반응형 */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+/* 뱃지 스타일 */
+.badge {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
