@@ -68,7 +68,7 @@ class LottoSyncServiceTest {
         service.syncLatestDraws();
 
         verify(jdbcRepo).saveAllBatch(anyList());
-        verify(recService).generateRecommendations(5);
+        verify(recService).generateRecommendations(LottoRecommendationService.AUTO_COUNT);
         assertEquals(List.of("SUCCESS"), loggedStatuses());
     }
 

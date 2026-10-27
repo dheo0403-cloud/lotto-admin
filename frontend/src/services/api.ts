@@ -75,7 +75,9 @@ export interface DashboardStats {
 
 export const getDraws = (page = 0, size = 20) => api.get(`/lotto/draws?page=${page}&size=${size}`);
 export const getDraw = (drawNo: number) => api.get(`/lotto/draws/${drawNo}`);
-export const generateRecommendations = (count = 5) => api.post(`/lotto/recommend?count=${count}`);
+// count를 생략하면 서버 기본값(전략 수만큼) 사용
+export const generateRecommendations = (count?: number) =>
+    api.post('/lotto/recommend', null, { params: count ? { count } : {} });
 export const syncDraw = (drawNo: number) => api.post(`/lotto/sync/${drawNo}`);
 export const getBatchLogs = (page = 0, size = 20) => api.get(`/logs/batch?page=${page}&size=${size}`);
 export const getDashboardStats = () => api.get<DashboardStats>('/stats/dashboard');

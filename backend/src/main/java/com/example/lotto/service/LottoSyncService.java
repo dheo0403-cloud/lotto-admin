@@ -161,11 +161,17 @@ public class LottoSyncService {
         return count;
     }
 
-    // 다음 회차 추천이 아직 없을 때만 5세트 생성 (재실행해도 중복 생성 안 됨)
+    // 다음 회차 추천이 아직 없을 때만 전략별 1세트씩 생성 (재실행해도 중복 생성 안 됨)
     private void generateNextIfMissing(int nextDraw) {
         if (recommendationRepository.existsByTargetDraw(nextDraw)) return;
-        lottoRecommendationService.generateRecommendations(5);
-        log.info("Auto-generated recommendations for draw {}", nextDraw);
+        try {
+            lottoRecommendationService.generateRecommendations(LottoRecommendationService.AUTO_COUNT);
+            log.info("Auto-generated recommendations for draw {}", nextDraw);
+        } catch (IllegalStateException e) {
+            // 수집은 이미 성공했으므로 추천 실패만 따로 기록
+            log.error("Auto recommendation failed for draw {}", nextDraw, e);
+            batchLogRepository.save(BatchLog.of("AUTO_RECOMMEND", "FAIL", "Draw " + nextDraw + ": " + e.getMessage()));
+        }
     }
 
     private void evaluateRecommendations(LottoDraw draw) {

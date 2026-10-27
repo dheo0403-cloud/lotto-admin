@@ -9,11 +9,12 @@ const Recommendation: React.FC = () => {
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            const res = await generateRecommendations(5);
+            const res = await generateRecommendations();
             setRecommendations(res.data);
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert('추천 번호 생성에 실패했습니다.');
+            // 409: 이미 생성된 회차 등 서버가 보낸 사유를 그대로 표시
+            alert(e.response?.status === 409 && e.response.data ? e.response.data : '추천 번호 생성에 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -27,7 +28,7 @@ const Recommendation: React.FC = () => {
             <div className="card">
                 <div className="card-header">
                     <button className="btn btn-success" onClick={handleGenerate} disabled={loading}>
-                        {loading ? '생성 중...' : '5세트 추천 번호 생성'}
+                        {loading ? '생성 중...' : '전략별 추천 번호 생성'}
                     </button>
                 </div>
                 <div className="card-body p-0">

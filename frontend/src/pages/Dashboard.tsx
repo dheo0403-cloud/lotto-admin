@@ -128,7 +128,7 @@ const Dashboard: React.FC = () => {
                             <div className="card h-100" style={{ backgroundColor: '#1e293b', border: 'none', margin: 0 }}>
                                 <div className="card-header" style={{ borderBottom: '1px solid #334155', backgroundColor: 'transparent' }}>
                                     <h3 className="card-title" style={{ fontSize: '13px', color: '#94a3b8' }}>
-                                        예측 5세트 결과 요약 (전략 / 예측 / 일치 / 보너스 / 등수)
+                                        예측 결과 요약 (전략 / 예측 / 일치 / 보너스 / 등수)
                                     </h3>
                                 </div>
                                 <div className="card-body p-0 table-responsive">

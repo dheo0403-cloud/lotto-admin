@@ -48,10 +48,15 @@ public class LottoController {
     }
 
     @PostMapping("/lotto/recommend")
-    public ResponseEntity<List<LottoRecommendation>> recommend(@RequestParam(defaultValue = "5") int count) {
+    public ResponseEntity<?> recommend(@RequestParam(defaultValue = "" + LottoRecommendationService.AUTO_COUNT) int count) {
         // 대량 생성 방지: 1~10세트로 제한
         int safeCount = Math.max(1, Math.min(count, 10));
-        return ResponseEntity.ok(lottoRecommendationService.generateRecommendations(safeCount));
+        try {
+            return ResponseEntity.ok(lottoRecommendationService.generateRecommendations(safeCount));
+        } catch (IllegalStateException e) {
+            // 이미 생성된 회차이거나 조건을 만족하는 조합을 찾지 못함
+            return ResponseEntity.status(409).body(e.getMessage());
+        }
     }
 
     @PostMapping("/lotto/sync/{drawNo}")
