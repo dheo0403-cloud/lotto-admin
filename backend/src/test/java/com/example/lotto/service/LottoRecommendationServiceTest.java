@@ -71,14 +71,15 @@ class LottoRecommendationServiceTest {
     void 열세트_요청하면_전략을_돌아가며_배정() {
         List<LottoRecommendation> recs = service.generateRecommendations(10);
         assertEquals(10, recs.size());
-        assertEquals(recs.get(0).getStrategy(), recs.get(6).getStrategy());
-        assertEquals(recs.get(3).getStrategy(), recs.get(9).getStrategy());
+        // 전략 5개 → 6번째부터 처음 전략부터 다시
+        assertEquals(recs.get(0).getStrategy(), recs.get(5).getStrategy());
+        assertEquals(recs.get(4).getStrategy(), recs.get(9).getStrategy());
     }
 
     @Test
     void 이미_추천이_있는_회차는_거부() {
         when(recRepo.existsByTargetDraw(301)).thenReturn(true);
-        assertThrows(IllegalStateException.class, () -> service.generateRecommendations(6));
+        assertThrows(IllegalStateException.class, () -> service.generateRecommendations(LottoRecommendationService.AUTO_COUNT));
         verify(recRepo, never()).save(any());
     }
 

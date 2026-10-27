@@ -5,7 +5,7 @@
 ## 구성
 - 백엔드 `backend/`: 포트 `8082`, context-path `/lotto`, API `/lotto/api/v1/**`, DB MariaDB `lotto_db`
 - 프론트 `frontend/`: `base: '/lotto/'`, 빌드 결과는 bootJar 시 `backend/src/main/resources/static/`으로 동기화(Sync, git 제외)
-- 수집: 동행복권 API(`LottoClient`), 매주 토 21:30 KST 스케줄 → 수집 후 다음 회차 추천이 없으면 전략별 1세트씩(6세트) 자동 생성
+- 수집: 동행복권 API(`LottoClient`), 매주 토 21:30 KST 스케줄 → 수집 후 다음 회차 추천이 없으면 전략별 1세트씩(5세트: 독식형·트렌드형·안정형·회귀형·동반형) 자동 생성
 - 추천 생성: 회차당 한 번만(이미 있으면 409). 공통 조건 = 인기 패턴 회피(AC값≥7 포함)·역대 1등 조합 제외·세트 간 공유 번호 2개 이하. 조건을 못 맞추면 조건을 풀지 않고 실패
 - 추천 채점: 회차 수집 시 `target_draw`가 같은 추천의 일치 개수·등수 갱신
 

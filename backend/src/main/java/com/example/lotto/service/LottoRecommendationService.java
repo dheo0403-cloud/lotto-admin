@@ -20,9 +20,8 @@ import java.util.stream.IntStream;
  * 1. 기댓값 극대화 (독식형) - 순수 난수 + 인기 패턴 회피 (홀짝/합계 무시)
  * 2. 이월수 포함 (트렌드형) - 직전 회차 번호 중 1개 고정 + 복합 가중치
  * 3. 통계 밸런스 (안정형)   - 구간별 1개씩 + 복합 가중치 (전체 70% + 최근 50회 30%)
- * 4. 핫콜드 믹스 (극단형)   - 최근 50회 상위 15개 중 4개 + 하위 15개 중 2개
- * 5. 장기 미출현 (회귀형)   - 마지막 출현 후 지난 회차 수만큼 가중
- * 6. 궁합수 (동반형)        - 먼저 뽑힌 번호와 함께 나온 횟수만큼 가중
+ * 4. 장기 미출현 (회귀형)   - 마지막 출현 후 지난 회차 수만큼 가중
+ * 5. 궁합수 (동반형)        - 먼저 뽑힌 번호와 함께 나온 횟수만큼 가중
  *
  * 공통 조건: 인기 패턴 회피(AC값 포함), 역대 1등 조합 제외, 다른 세트와 공유 번호 2개 이하.
  * 추첨 확률은 어떤 조합이든 같다. 인기 패턴 회피는 1등 당첨 시 당첨금을 나눌 사람 수를 줄이려는 목적이다.
@@ -36,7 +35,7 @@ public class LottoRecommendationService {
     private final LottoDrawRepository lottoDrawRepository;
 
     // 자동 생성 세트 수 = 전략 수 (전략마다 1세트)
-    public static final int AUTO_COUNT = 6;
+    public static final int AUTO_COUNT = 5;
 
     private static final int TOTAL_NUMBERS = 45;
     private static final int PICK_COUNT = 6;
@@ -129,7 +128,6 @@ public class LottoRecommendationService {
                 new Strategy("이월수 포함 (트렌드형)", true,
                         () -> weightedPick(compositeWeight, List.of(lastDrawNumbers.get(random.nextInt(PICK_COUNT))))),
                 new Strategy("통계 밸런스 (안정형)", true, () -> strategyComprehensive(compositeWeight)),
-                new Strategy("핫콜드 믹스 (극단형)", true, () -> strategyHotColdMix(recentFrequency)),
                 new Strategy("장기 미출현 (회귀형)", true, () -> weightedPick(overdueWeight, List.of())),
                 new Strategy("궁합수 (동반형)", true, () -> strategyPair(compositeWeight, pairCount))
         );
@@ -159,24 +157,6 @@ public class LottoRecommendationService {
             numbers.add(weightedRandomPickOne(zoneWeights));
         }
         return weightedPick(compositeWeight, numbers);
-    }
-
-    // 최근 50회 빈도 상위 15개에서 4개, 하위 15개에서 2개
-    private List<Integer> strategyHotColdMix(Map<Integer, Integer> recentFreq) {
-        // 빈도 동점이면 번호 순서가 아니라 무작위 순서가 되도록 먼저 섞는다 (정렬은 안정 정렬)
-        List<Integer> sortedByRecent = new ArrayList<>(IntStream.rangeClosed(1, TOTAL_NUMBERS).boxed().toList());
-        Collections.shuffle(sortedByRecent);
-        sortedByRecent.sort(Comparator.comparingInt((Integer n) -> recentFreq.getOrDefault(n, 0)).reversed());
-
-        List<Integer> hotPool = new ArrayList<>(sortedByRecent.subList(0, 15));
-        List<Integer> coldPool = new ArrayList<>(sortedByRecent.subList(30, 45));
-        Collections.shuffle(hotPool);
-        Collections.shuffle(coldPool);
-
-        List<Integer> numbers = new ArrayList<>(hotPool.subList(0, 4));
-        numbers.addAll(coldPool.subList(0, 2));
-        Collections.sort(numbers);
-        return numbers;
     }
 
     // 첫 번호는 복합 가중치, 이후 번호는 (1 + 이미 뽑은 번호들과 함께 나온 횟수 합) 가중치
